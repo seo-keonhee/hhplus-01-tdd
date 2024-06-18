@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import io.hhplus.tdd.database.*;
+
 @RestController
 @RequestMapping("/point")
 public class PointController {
@@ -13,44 +15,66 @@ public class PointController {
     private static final Logger log = LoggerFactory.getLogger(PointController.class);
 
     /**
-     * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
+     * 특정 유저의 포인트를 조회하는 기능
      */
     @GetMapping("{id}")
     public UserPoint point(
             @PathVariable long id
     ) {
-        return new UserPoint(0, 0, 0);
+        // 유저포인트 테이블 객체 생성
+        UserPointTable userPointTable = new UserPointTable();
+        // 유저포인트 조회
+        return userPointTable.selectById(id);
     }
 
     /**
-     * TODO - 특정 유저의 포인트 충전/이용 내역을 조회하는 기능을 작성해주세요.
+     * 특정 유저의 포인트 충전/이용 내역을 조회하는 기능
      */
     @GetMapping("{id}/histories")
     public List<PointHistory> history(
             @PathVariable long id
     ) {
-        return List.of();
+        // 포인트 사용이력 테이블 객체생성
+        PointHistoryTable pointHistoryTable = new PointHistoryTable();
+        // 포인트 사용이력 테이블 조회
+        return pointHistoryTable.selectAllByUserId(id);
     }
 
     /**
-     * TODO - 특정 유저의 포인트를 충전하는 기능을 작성해주세요.
+     * 특정 유저의 포인트를 충전하는 기능
      */
     @PatchMapping("{id}/charge")
     public UserPoint charge(
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        // 유저포인트, 포인트 사용이력 테이블 객체 생성
+        UserPointTable userPointTable = new UserPointTable();
+        PointHistoryTable pointHistoryTable = new PointHistoryTable();
+        // 유저포인트 조회
+        UserPoint uPoint = userPointTable.selectById(id);
+        // 포인트 사용이력 추가
+        pointHistoryTable.insert(id, uPoint.point() + amount, TransactionType.CHARGE, System.currentTimeMillis());
+        // 유저포인트 적립
+        return userPointTable.insertOrUpdate(id, uPoint.point() + amount);
     }
-
+    
     /**
-     * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
+     * 특정 유저의 포인트를 사용하는 기능
      */
     @PatchMapping("{id}/use")
     public UserPoint use(
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        // 유저포인트, 포인트 사용이력 테이블 객체 생성
+        UserPointTable userPointTable = new UserPointTable();
+        PointHistoryTable pointHistoryTable = new PointHistoryTable();
+        // 유저포인트 조회
+        UserPoint uPoint = userPointTable.selectById(id);
+        // 포인트 사용이력 추가
+        pointHistoryTable.insert(id, uPoint.point() - amount, TransactionType.USE, System.currentTimeMillis());
+        // 유저포인트 사용
+        return userPointTable.insertOrUpdate(id, uPoint.point() - amount);
     }
 }
